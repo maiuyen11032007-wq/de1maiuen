@@ -1,0 +1,57 @@
+[
+  {
+    "id": "NV01",
+    "name": "Nguyễn Văn An",
+    "email": "an.nguyen@minhan-tech.vn",
+    "phone": "0912.345.601",
+    "active_deals": 5,
+    "specialty": "Thiết bị văn phòng & Laptop",
+    "role": "Nhân viên Kinh doanh"
+  },
+  {
+    "id": "NV02",
+    "name": "Trần Thị Bích",
+    "email": "bich.tran@minhan-tech.vn",
+    "phone": "0912.345.602",
+    "active_deals": 6,
+    "specialty": "Hạ tầng mạng & Bảo mật",
+    "role": "Nhân viên Kinh doanh"
+  },
+  {
+    "id": "NV03",
+    "name": "Lê Hoàng Cường",
+    "email": "cuong.le@minhan-tech.vn",
+    "phone": "0912.345.603",
+    "active_deals": 4,
+    "specialty": "Máy chủ & Trung tâm dữ liệu",
+    "role": "Nhân viên Kinh doanh"
+  },
+  {
+    "id": "NV04",
+    "name": "Phạm Quốc Dũng",
+    "email": "dung.pham@minhan-tech.vn",
+    "phone": "0912.345.604",
+    "active_deals": 7,
+    "specialty": "Dịch vụ giải pháp CNTT",
+    "role": "Nhân viên Kinh doanh"
+  },
+  {
+    "id": "NV05",
+    "name": "Vũ Mai Em",
+    "email": "em.vu@minhan-tech.vn",
+    "phone": "0912.345.605",
+    "active_deals": 5,
+    "specialty": "Khách hàng Doanh nghiệp FDI",
+    "role": "Nhân viên Kinh doanh"
+  },
+  {
+    "id": "NV06",
+    "name": "Đặng Tuấn Phong",
+    "email": "phong.dang@minhan-tech.vn",
+    "phone": "0912.345.606",
+    "active_deals": 4,
+    "specialty": "Khách hàng Doanh nghiệp Vừa & Nhỏ",
+    "role": "Nhân viên Kinh doanh"
+  }
+]
+

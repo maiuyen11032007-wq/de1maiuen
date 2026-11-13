@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minh An B2B AI Agent - Hệ Thống Xử Lý Cơ Hội Bán Hàng Tự Động</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            rosebrand: {
+              50: '#FFF1F4',
+              100: '#FFE3E9',
+              200: '#FFC9D6',
+              300: '#FF9EB5',
+              400: '#FF6B8E',
+              500: '#F43F6E',
+              600: '#E12256',
+              700: '#BD1544',
+              800: '#9C143C',
+              900: '#831537'
+            }
+          },
+          boxShadow: {
+            'rose-soft': '0 14px 34px -6px rgba(225, 34, 86, 0.12), 0 4px 12px -2px rgba(225, 34, 86, 0.06)',
+            'rose-glow': '0 10px 25px -4px rgba(244, 63, 110, 0.45)',
+            'card-clean': '0 8px 24px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #FFF5F7 0%, #FFF0F4 50%, #F8FAFC 100%);
+      color: #1E293B;
+      overflow-x: hidden;
+    }
+
+    /* Vibrant Coral-Rose Gradient (Matched to Uploaded Reference Image) */
+    .rose-hero-gradient {
+      background: linear-gradient(130deg, #FF708D 0%, #F0416C 48%, #C91E4E 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Organic Soft Wave Overlay */
+    .rose-wave-shape {
+      position: absolute;
+      right: -8%;
+      top: -15%;
+      width: 58%;
+      height: 135%;
+      background: linear-gradient(145deg, rgba(255, 165, 185, 0.32) 0%, rgba(180, 15, 65, 0.25) 100%);
+      border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%;
+      pointer-events: none;
+    }
+
+    /* Sidebar Collapsible Transition */
+    #app-sidebar {
+      transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #app-sidebar.collapsed {
+      width: 78px !important;
+    }
+    #app-sidebar.collapsed .sidebar-text,
+    #app-sidebar.collapsed .sidebar-badge,
+    #app-sidebar.collapsed .sidebar-footer-detail {
+      display: none !important;
+    }
+    #app-sidebar.collapsed .nav-btn-item {
+      justify-content: center !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    /* Flowchart Nodes */
+    .wf-node {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+    .wf-node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px -4px rgba(244, 63, 110, 0.2);
+    }
+    .wf-node.active-wf {
+      border-color: #E12256 !important;
+      background: #FFF1F4 !important;
+      box-shadow: 0 0 0 3px rgba(244, 63, 110, 0.25) !important;
+    }
+    .wf-node.warning-wf {
+      border-color: #D97706 !important;
+      background: #FFFBEB !important;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.28) !important;
+    }
+    .wf-node.success-wf {
+      border-color: #059669 !important;
+      background: #ECFDF5 !important;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+    }
+
+    /* Isometric Card Float Animation */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .iso-float {
+      animation: floatSlow 4s ease-in-out infinite;
+    }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #FFF1F4; }
+    ::-webkit-scrollbar-thumb { background: #F43F6E; border-radius: 99px; }
+  </style>
+</head>
+<body class="min-h-screen flex selection:bg-rosebrand-500 selection:text-white">
+
+  <!-- TOAST NOTIFICATION BOX -->
+  <div id="toast-container" class="space-y-2 pointer-events-none"></div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. COLLAPSIBLE SIDEBAR (CÓ THỂ THU RA / VÀO MƯỢT MÀ)                      -->
+  <!-- ========================================================================= -->
+  <aside id="app-sidebar" class="w-64 bg-white border-r border-rosebrand-100 flex-shrink-0 flex flex-col justify-between sticky top-0 h-screen z-40 shadow-card-clean select-none">
+    
+    <!-- Top Brand + Toggle Collapse Button -->
+    <div class="p-4 space-y-5">
+      <div class="flex items-center justify-between border-b border-rosebrand-100 pb-3.5">
+        <div class="flex items-center space-x-2.5 overflow-hidden cursor-pointer" onclick="switchTab('workspace')">
+          <div class="w-10 h-10 rounded-xl rose-hero-gradient flex items-center justify-center text-white font-black text-lg shadow-rose-glow flex-shrink-0">
+            ⋈
+          </div>
+          <div class="sidebar-text overflow-hidden">
+            <div class="text-sm font-extrabold text-slate-900 tracking-tight truncate">MINH AN CORP</div>
+            <div class="text-[10px] font-bold text-rosebrand-600 uppercase tracking-wider truncate">AI Agent B2B</div>
+          </div>
+        </div>
+
+        <!-- Toggle Sidebar Button -->
+        <button onclick="toggleSidebar()" id="sidebar-toggle-btn" title="Thu gọn / Mở rộng thanh bên"
+          class="w-8 h-8 rounded-lg bg-rosebrand-50 hover:bg-rosebrand-500 text-rosebrand-600 hover:text-white flex items-center justify-center transition font-bold text-xs flex-shrink-0 shadow-sm">
+          ◀
+        </button>
+      </div>
+
+      <!-- Main Navigation Modules -->
+      <div class="space-y-1">
+        <div class="sidebar-text text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-2.5 mb-1.5">
+          Chức Năng Chính
+        </div>
+
+        <button onclick="switchTab('workspace')" id="nav-btn-workspace" title="Quy trình Xử lý Yêu cầu"
+          class="nav-btn-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-rosebrand-500 text-white font-bold text-xs shadow-rose-glow transition">
+          <div class="flex items-center space-x-3">
+            <span class="text-base">🚀</span>
+            <span class="sidebar-text">Quy Trình Xử Lý AI</span>
+          </div>
+          <span class="sidebar-badge px-1.5 py-0.5 text-[10px] rounded bg-white/20 text-white">Live</span>
+        </button>
+
+        <button onclick="switchTab('inventory')" id="nav-btn-inventory" title="Danh mục Sản phẩm & Tồn kho"
+          class="nav-btn-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 font-bold text-xs transition">
+          <div class="flex items-center space-x-3">
+            <span class="text-base">📦</span>
+            <span class="sidebar-text">Bảng Giá & Tồn Kho</span>
+          </div>
+          <span class="sidebar-badge text-[10px] font-mono text-slate-400">9 SKU</span>
+        </button>
+
+        <button onclick="switchTab('sales-team')" id="nav-btn-sales-team" title="Đội ngũ 6 Nhân viên Kinh doanh"
+          class="nav-btn-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 font-bold text-xs transition">
+          <div class="flex items-center space-x-3">
+            <span class="text-base">👥</span>
+            <span class="sidebar-text">Đội Ngũ 6 NVKD</span>
+          </div>
+          <span class="sidebar-badge text-[10px] font-mono text-slate-400">6 Sales</span>
+        </button>
+
+        <button onclick="switchTab('history')" id="nav-btn-history" title="Nhật ký Hồ sơ Cơ hội CRM"
+          class="nav-btn-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 font-bold text-xs transition">
+          <div class="flex items-center space-x-3">
+            <span class="text-base">🗂️</span>
+            <span class="sidebar-text">Lịch Sử Pipeline</span>
+          </div>
+          <span id="sidebar-history-count" class="sidebar-badge px-1.5 py-0.5 text-[10px] rounded-full bg-rosebrand-100 text-rosebrand-700 font-extrabold">0</span>
+        </button>
+      </div>
+
+      <!-- Quick Jump to Workflow Steps -->
+      <div class="space-y-1 pt-3 border-t border-rosebrand-100">
+        <div class="sidebar-text text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-2.5 mb-1.5">
+          Đi Nhanh Từng Bước
+        </div>
+
+        <button onclick="jumpToStep('step-1-box')" title="Bước 1: Tiếp nhận yêu cầu"
+          class="nav-btn-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 text-xs font-semibold transition">
+          <span class="w-5 h-5 rounded-full bg-rosebrand-100 text-rosebrand-700 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">1</span>
+          <span class="sidebar-text truncate">Tiếp Nhận Yêu Cầu</span>
+        </button>
+
+        <button onclick="jumpToStep('step-2-box')" title="Bước 2: Phân loại & Kiểm tra"
+          class="nav-btn-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 text-xs font-semibold transition">
+          <span class="w-5 h-5 rounded-full bg-rosebrand-100 text-rosebrand-700 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">2</span>
+          <span class="sidebar-text truncate">Phân Loại & Kiểm Tra</span>
+        </button>
+
+        <button onclick="jumpToStep('step-2b-box')" title="Nhánh 2B: Làm rõ & KH phản hồi"
+          class="nav-btn-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-amber-700 hover:bg-amber-50 text-xs font-semibold transition">
+          <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">2B</span>
+          <span class="sidebar-text truncate">Vòng Lặp KH Bổ Sung</span>
+        </button>
+
+        <button onclick="jumpToStep('step-34-box')" title="Bước 3 & 4: Gán NVKD & Thẩm định Kho"
+          class="nav-btn-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 text-xs font-semibold transition">
+          <span class="w-5 h-5 rounded-full bg-rosebrand-100 text-rosebrand-700 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">3-4</span>
+          <span class="sidebar-text truncate">Gán NVKD & Kho Giá</span>
+        </button>
+
+        <button onclick="jumpToStep('step-5-box')" title="Bước 5: Báo giá & Trưởng phòng duyệt"
+          class="nav-btn-item w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 text-xs font-semibold transition">
+          <span class="w-5 h-5 rounded-full bg-rosebrand-100 text-rosebrand-700 text-[10px] font-extrabold flex items-center justify-center flex-shrink-0">5</span>
+          <span class="sidebar-text truncate">Duyệt & Khóa/Mở Gửi</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Sidebar Status & Reset -->
+    <div class="p-4 border-t border-rosebrand-100 space-y-2">
+      <div class="sidebar-footer-detail bg-rosebrand-50/80 border border-rosebrand-200 p-3 rounded-xl text-[11px] space-y-1">
+        <div class="flex items-center space-x-1.5 font-extrabold text-rosebrand-700">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span>Gemini 2.5 Flash + Rule</span>
+        </div>
+        <div class="text-slate-500 text-[10px]">6 NVKD • ~180 yêu cầu/tuần</div>
+      </div>
+
+      <button onclick="resetPipeline()" title="Làm mới dữ liệu"
+        class="nav-btn-item w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-slate-200 hover:border-rosebrand-400 text-slate-600 hover:text-rosebrand-600 text-xs font-bold transition">
+        <span>🔄</span>
+        <span class="sidebar-text">Reset Dữ Liệu Mẫu</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN CONTENT CONTAINER                                                 -->
+  <!-- ========================================================================= -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- CORAL-ROSE HERO BANNER (INSPIRED BY UPLOADED IMAGE 2) -->
+    <header class="p-4 sm:p-6 pb-2">
+      <div class="rose-hero-gradient rounded-3xl text-white shadow-rose-soft p-6 sm:p-8 relative">
+        <!-- Background Soft Wave Shape -->
+        <div class="rose-wave-shape"></div>
+
+        <!-- Top Navbar Inside Hero (Like Image 2: Logo, Menu Links, White Pill CTA) -->
+        <div class="relative z-10 flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/15">
+          <div class="flex items-center space-x-2.5">
+            <button onclick="toggleSidebar()" class="px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition">
+              ☰ Menu
+            </button>
+            <span class="text-xs font-extrabold uppercase tracking-widest text-white/90">MINH AN TECHNOLOGY B2B</span>
+          </div>
+
+          <div class="hidden lg:flex items-center space-x-7 text-xs font-bold uppercase tracking-wider text-white/85">
+            <button onclick="switchTab('workspace')" class="hover:text-white transition">QUY TRÌNH</button>
+            <button onclick="jumpToStep('step-2-box')" class="hover:text-white transition">KIỂM TRA THÔNG TIN</button>
+            <button onclick="switchTab('inventory')" class="hover:text-white transition">BẢNG GIÁ & KHO</button>
+            <button onclick="switchTab('sales-team')" class="hover:text-white transition">6 NVKD</button>
+            <button onclick="switchTab('history')" class="hover:text-white transition">PIPELINE CRM</button>
+          </div>
+
+          <button onclick="createNewBlankRequest()" 
+            class="px-5 py-2 rounded-full bg-white text-rosebrand-600 hover:bg-rosebrand-50 font-extrabold text-xs uppercase tracking-wider shadow-md transition transform active:scale-95">
+            + Tạo Yêu Cầu Mới
+          </button>
+        </div>
+
+        <!-- Hero Content + Carousel Arrows < > + Isometric Visual -->
+        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center pt-6">
+          
+          <!-- Left Arrow + Scenario Slide Info (7 Cols) -->
+          <div class="lg:col-span-7 flex items-center space-x-3 sm:space-x-5">
+            <!-- Working Left Arrow < -->
+            <button onclick="prevHeroScenario()" title="Kịch bản trước"
+              class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white text-xl font-bold transition flex-shrink-0">
+              ‹
+            </button>
+
+            <div class="space-y-3">
+              <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-[11px] font-extrabold uppercase tracking-wider">
+                <span id="hero-slide-badge">KỊCH BẢN MẪU 1 / 4</span>
+              </div>
+              <h1 id="hero-slide-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
+                B2B SALES AGENT
+              </h1>
+              <p id="hero-slide-desc" class="text-xs sm:text-sm text-rosebrand-50 leading-relaxed max-w-xl">
+                Hệ thống xử lý từ yêu cầu ban đầu đến hồ sơ cơ hội và bản nháp phản hồi khách hàng. Tự động hóa vòng lặp làm rõ thông tin, đối soát tồn kho và khóa gửi khi vượt quyền.
+              </p>
+              <div class="pt-1 flex flex-wrap items-center gap-3">
+                <button onclick="applyCurrentHeroScenario(true)" 
+                  class="px-6 py-2.5 rounded-full bg-white text-rosebrand-600 hover:bg-rosebrand-50 font-extrabold text-xs uppercase tracking-wider shadow-lg transition">
+                  ▶ Nạp & Chạy Ngay Ca Này
+                </button>
+                <button onclick="jumpToStep('flowchart-section')" 
+                  class="px-6 py-2.5 rounded-full border-2 border-white/80 hover:bg-white/15 text-white font-extrabold text-xs uppercase tracking-wider transition">
+                  Xem Sơ Đồ Luồng
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Isometric Cards + Right Arrow > (5 Cols) -->
+          <div class="lg:col-span-5 flex items-center justify-between">
+            <!-- Isometric Envelope / Opportunity Preview Card -->
+            <div class="flex-1 grid grid-cols-2 gap-3 pr-2 iso-float">
+              <div onclick="jumpToStep('step-1-box')" class="cursor-pointer bg-white/95 text-slate-800 p-3.5 rounded-2xl shadow-lg border border-white">
+                <div class="text-xl mb-1">💌</div>
+                <div class="text-[11px] font-extrabold text-rosebrand-600 uppercase">Tiếp Nhận & Phân Loại</div>
+                <div class="text-[10px] text-slate-500 mt-0.5">Kiểm tra liên hệ + SP + SL</div>
+              </div>
+              <div onclick="jumpToStep('step-2b-box')" class="cursor-pointer bg-white/95 text-slate-800 p-3.5 rounded-2xl shadow-lg border border-white mt-4">
+                <div class="text-xl mb-1">🔁</div>
+                <div class="text-[11px] font-extrabold text-amber-600 uppercase">Vòng Lặp Làm Rõ</div>
+                <div class="text-[10px] text-slate-500 mt-0.5">KH phản hồi → Quay lại B2</div>
+              </div>
+              <div onclick="jumpToStep('step-34-box')" class="cursor-pointer bg-white/95 text-slate-800 p-3.5 rounded-2xl shadow-lg border border-white">
+                <div class="text-xl mb-1">📦</div>
+                <div class="text-[11px] font-extrabold text-emerald-600 uppercase">Kho & Giá Thực Tế</div>
+                <div class="text-[10px] text-slate-500 mt-0.5">Đối soát trực tiếp JSON</div>
+              </div>
+              <div onclick="jumpToStep('step-5-box')" class="cursor-pointer bg-white/95 text-slate-800 p-3.5 rounded-2xl shadow-lg border border-white mt-4">
+                <div class="text-xl mb-1">🔐</div>
+                <div class="text-[11px] font-extrabold text-purple-700 uppercase">Khóa / Mở Phê Duyệt</div>
+                <div class="text-[10px] text-slate-500 mt-0.5">CK &gt; 5% cần TP duyệt</div>
+              </div>
+            </div>
+
+            <!-- Working Right Arrow > -->
+            <button onclick="nextHeroScenario()" title="Kịch bản tiếp theo"
+              class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white text-xl font-bold transition flex-shrink-0">
+              ›
+            </button>
+          </div>
+        </div>
+
+        <!-- Working Pagination Dots o o o • -->
+        <div class="relative z-10 flex items-center justify-center space-x-2.5 pt-5">
+          <button onclick="selectHeroSlide(1)" id="hero-dot-1" class="w-3 h-3 rounded-full bg-white transition"></button>
+          <button onclick="selectHeroSlide(2)" id="hero-dot-2" class="w-3 h-3 rounded-full bg-white/40 hover:bg-white/70 transition"></button>
+          <button onclick="selectHeroSlide(3)" id="hero-dot-3" class="w-3 h-3 rounded-full bg-white/40 hover:bg-white/70 transition"></button>
+          <button onclick="selectHeroSlide(4)" id="hero-dot-4" class="w-3 h-3 rounded-full bg-white/40 hover:bg-white/70 transition"></button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN DYNAMIC TAB AREA -->
+    <main class="flex-1 p-4 sm:p-6 space-y-6">
+
+      <!-- ===================================================================== -->
+      <!-- TAB 1: WORKSPACE (QUY TRÌNH MỚI TƯƠNG TÁC TỪNG BƯỚC)                  -->
+      <!-- ===================================================================== -->
+      <div id="tab-workspace" class="space-y-6">
+
+        <!-- INTERACTIVE FLOWCHART DIAGRAM (MATCHING USER'S IMAGE 1 WITH LOOPBACK) -->
+        <section id="flowchart-section" class="bg-white rounded-3xl p-5 sm:p-6 shadow-card-clean border border-rosebrand-100">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-rosebrand-500">Interactive Workflow Map</span>
+              <h2 class="text-base font-extrabold text-slate-900">Sơ Đồ Quy Trình Vận Hành Mới (Bấm vào từng bước để thao tác ngay)</h2>
+            </div>
+            <div id="live-status-pill" class="px-3.5 py-1 rounded-full text-xs font-extrabold bg-rosebrand-50 text-rosebrand-600 border border-rosebrand-200">
+              Trạng thái: Sẵn sàng tiếp nhận
+            </div>
+          </div>
+
+          <!-- Flowchart Visual Layout with Loopback -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch text-xs">
+            
+            <!-- Left Branch: Loopback Clarification (4 Cols) -->
+            <div class="lg:col-span-4 bg-amber-50/60 border-2 border-dashed border-amber-300 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+              <div class="flex items-center justify-between text-[11px] font-extrabold text-amber-800">
+                <span>🔁 VÒNG LẶP KHI THIẾU THÔNG TIN</span>
+                <span class="px-2 py-0.5 rounded bg-amber-200 text-amber-900 text-[10px]">Nhánh Không</span>
+              </div>
+
+              <div id="wf-node-2b" onclick="jumpToStep('step-2b-box')" class="wf-node bg-white border border-amber-300 p-2.5 rounded-xl text-center">
+                <div class="font-extrabold text-amber-900">Nhánh 2B: Yêu cầu KH làm rõ / bổ sung</div>
+                <div class="text-[10px] text-amber-700">Tự động sinh bản nháp Email hỏi lại KH</div>
+              </div>
+
+              <div class="text-center text-amber-600 font-bold text-[11px]">↓ Chờ KH phản hồi</div>
+
+              <div id="wf-node-wait-reply" onclick="jumpToStep('step-2b-box')" class="wf-node bg-white border border-amber-300 p-2.5 rounded-xl text-center">
+                <div class="font-extrabold text-amber-900">💬 Khách phản hồi xong</div>
+                <div class="text-[10px] text-emerald-700 font-bold">⮑ Quay ngược lại Bước 2: Phân loại & Kiểm tra</div>
+              </div>
+            </div>
+
+            <!-- Main Trunk Pipeline (8 Cols) -->
+            <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <!-- Col 1: Step 1 & Step 2 -->
+              <div class="space-y-2.5 flex flex-col justify-between">
+                <div id="wf-node-1" onclick="jumpToStep('step-1-box')" class="wf-node border-2 border-slate-200 bg-slate-50 p-3 rounded-2xl text-center">
+                  <span class="px-2 py-0.5 rounded-full bg-rosebrand-100 text-rosebrand-700 text-[10px] font-extrabold">Bước 1</span>
+                  <div class="font-extrabold text-slate-800 mt-1">Tiếp nhận yêu cầu</div>
+                  <div class="text-[10px] text-slate-500">Email / Biểu mẫu văn bản</div>
+                </div>
+
+                <div class="text-center text-slate-400 font-bold">↓</div>
+
+                <div id="wf-node-2" onclick="jumpToStep('step-2-box')" class="wf-node border-2 border-slate-200 bg-slate-50 p-3 rounded-2xl text-center">
+                  <span class="px-2 py-0.5 rounded-full bg-rosebrand-100 text-rosebrand-700 text-[10px] font-extrabold">Bước 2 ♦</span>
+                  <div class="font-extrabold text-slate-800 mt-1">Phân loại & Kiểm tra</div>
+                  <div class="text-[10px] text-slate-500">Đủ Liên hệ + SP & SL?</div>
+                </div>
+              </div>
+
+              <!-- Col 2: Step 3 & Step 4 -->
+              <div class="space-y-2.5 flex flex-col justify-between">
+                <div id="wf-node-3" onclick="jumpToStep('step-34-box')" class="wf-node border-2 border-slate-200 bg-slate-50 p-3 rounded-2xl text-center">
+                  <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-extrabold">Bước 3 (Nhánh Có)</span>
+                  <div class="font-extrabold text-slate-800 mt-1">Tạo Hồ sơ & Gán NVKD</div>
+                  <div class="text-[10px] text-slate-500">Chia tự động 6 NVKD</div>
+                </div>
+
+                <div class="text-center text-slate-400 font-bold">↓</div>
+
+                <div id="wf-node-4" onclick="jumpToStep('step-34-box')" class="wf-node border-2 border-slate-200 bg-slate-50 p-3 rounded-2xl text-center">
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold">Bước 4</span>
+                  <div class="font-extrabold text-slate-800 mt-1">Thẩm định Kho & Giá</div>
+                  <div class="text-[10px] text-slate-500">Đối soát products.json</div>
+                </div>
+              </div>
+
+              <!-- Col 3: Step 5, Manager Lock & EndTrack -->
+              <div class="space-y-2.5 flex flex-col justify-between">
+                <div id="wf-node-5" onclick="jumpToStep('step-5-box')" class="wf-node border-2 border-slate-200 bg-slate-50 p-3 rounded-2xl text-center">
+                  <span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-extrabold">Bước 5 ♦</span>
+                  <div class="font-extrabold text-slate-800 mt-1">Lập Báo giá & Thẩm quyền</div>
+                  <div class="text-[10px] text-slate-500">CK &gt; 5% → Khóa nút gửi</div>
+                </div>
+
+                <div class="text-center text-slate-400 font-bold">↓</div>
+
+                <div id="wf-node-end" onclick="jumpToStep('step-end-box')" class="wf-node border-2 border-slate-200 bg-slate-50 p-3 rounded-2xl text-center">
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">EndTrack</span>
+                  <div class="font-extrabold text-slate-800 mt-1">Mở khóa & Gửi KH</div>
+                  <div class="text-[10px] text-slate-500">Lưu Pipeline & Xuất PDF</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- STEP-BY-STEP INTERACTIVE WORKBENCH (DỄ THAO TÁC, DỄ HIỂU NGAY)      -->
+        <!-- =================================================================== -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          <!-- LEFT 5 COLS: BƯỚC 1 (NHẬP EMAIL) + BƯỚC 2 (CÁC Ô NHẬP LIỆU CỤ THỂ) -->
+          <div class="lg:col-span-5 space-y-6">
+
+            <!-- BƯỚC 1: TIẾP NHẬN YÊU CẦU -->
+            <div id="step-1-box" class="bg-white rounded-3xl p-5 sm:p-6 shadow-card-clean border border-rosebrand-100 space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span class="w-7 h-7 rounded-lg rose-hero-gradient text-white font-extrabold text-xs flex items-center justify-center">1</span>
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Bước 1: Tiếp Nhận Yêu Cầu Khách Hàng</h3>
+                    <p class="text-[11px] text-slate-500">Chọn nhanh kịch bản mẫu hoặc dán nội dung email</p>
+                  </div>
+                </div>
+                <button onclick="clearInput()" class="text-xs font-bold text-rosebrand-600 hover:underline">Xóa trắng</button>
+              </div>
+
+              <!-- 4 Clickable Scenario Buttons -->
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="loadScenario(1, true)" class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-left transition">
+                  <div class="font-extrabold text-amber-900">⚠️ Ca 1: Thiếu thông tin</div>
+                  <div class="text-[10px] text-amber-700 truncate">Test vòng lặp KH phản hồi</div>
+                </button>
+                <button onclick="loadScenario(2, true)" class="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-left transition">
+                  <div class="font-extrabold text-emerald-900">✅ Ca 2: Đủ & Chuẩn (CK 4%)</div>
+                  <div class="text-[10px] text-emerald-700 truncate">Mở khóa gửi báo giá ngay</div>
+                </button>
+                <button onclick="loadScenario(3, true)" class="p-2.5 rounded-xl border border-rosebrand-200 bg-rosebrand-50/70 hover:bg-rosebrand-100 text-left transition">
+                  <div class="font-extrabold text-rosebrand-800">🔒 Ca 3: Vượt quyền (CK 10%)</div>
+                  <div class="text-[10px] text-rosebrand-600 truncate">Khóa nút gửi, chờ TP duyệt</div>
+                </button>
+                <button onclick="loadScenario(4, true)" class="p-2.5 rounded-xl border border-purple-200 bg-purple-50/70 hover:bg-purple-100 text-left transition">
+                  <div class="font-extrabold text-purple-900">⏱️ Ca 4: Hết kho & Gấp 3 ngày</div>
+                  <div class="text-[10px] text-purple-700 truncate">Cảnh báo & chia 2 đợt giao</div>
+                </button>
+              </div>
+
+              <textarea id="raw-input" rows="7"
+                class="w-full text-xs font-mono p-3.5 rounded-2xl bg-slate-50 border border-slate-200 focus:border-rosebrand-500 focus:bg-white focus:outline-none leading-relaxed"
+                placeholder="Dán nội dung email hoặc yêu cầu của khách hàng vào đây..."></textarea>
+
+              <button id="btn-process" onclick="processWithAgent()"
+                class="w-full py-3 px-5 rounded-2xl rose-hero-gradient text-white font-extrabold text-xs uppercase tracking-wider shadow-rose-glow hover:opacity-95 transition flex items-center justify-center space-x-2">
+                <span>⚡ Chạy Bước 1 & 2: AI Bóc Tách & Kiểm Tra Thông Tin</span>
+              </button>
+            </div>
+
+            <!-- BƯỚC 2: FORM Ô NHẬP LIỆU TRỰC QUAN (CÓ THỂ SỬA TRỰC TIẾP) -->
+            <div id="step-2-box" class="bg-white rounded-3xl p-5 sm:p-6 shadow-card-clean border border-rosebrand-100 space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2">
+                  <span class="w-7 h-7 rounded-lg bg-slate-800 text-white font-extrabold text-xs flex items-center justify-center">2</span>
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Bước 2: Các Ô Dữ Liệu Bóc Tách (Sửa Trực Tiếp)</h3>
+                    <p class="text-[11px] text-slate-500">Bạn có thể nhập/sửa bất kỳ ô nào bên dưới rồi bấm Cập nhật</p>
+                  </div>
+                </div>
+                <span id="step2-valid-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600">
+                  Chưa kiểm tra
+                </span>
+              </div>
+
+              <!-- Easy-to-use Form Inputs -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">👤 Tên người liên hệ</label>
+                  <input type="text" id="inp-customer" placeholder="VD: Nguyễn Tuấn Anh"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rosebrand-500 focus:outline-none font-semibold">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">🏢 Tên công ty / Doanh nghiệp</label>
+                  <input type="text" id="inp-company" placeholder="VD: Công ty Alpha Logistics"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rosebrand-500 focus:outline-none font-semibold">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-rosebrand-700 mb-1">📧 Email nhận báo giá (*)</label>
+                  <input type="email" id="inp-email" placeholder="batbuoc@congty.vn"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rosebrand-500 focus:outline-none font-semibold">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-rosebrand-700 mb-1">📞 Số điện thoại (*)</label>
+                  <input type="text" id="inp-phone" placeholder="0988.xxx.xxx"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rosebrand-500 focus:outline-none font-semibold">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">⏳ Thời hạn yêu cầu</label>
+                  <input type="text" id="inp-deadline" placeholder="VD: Trong 5 ngày"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rosebrand-500 focus:outline-none font-semibold">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">💰 Ngân sách khách (VNĐ)</label>
+                  <input type="number" id="inp-budget" placeholder="VD: 150000000"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rosebrand-500 focus:outline-none font-semibold">
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-[11px] font-bold text-slate-600 mb-1">🏷️ Mức chiết khấu khách đề nghị (%) — <span class="text-rosebrand-600">(&le;5%: NVKD tự quyết | &gt;5%: Cần TP duyệt)</span></label>
+                  <div class="flex items-center space-x-3">
+                    <input type="range" id="inp-discount-range" min="0" max="20" step="0.5" value="0"
+                      oninput="document.getElementById('inp-discount').value = this.value"
+                      class="flex-1 accent-rosebrand-500 cursor-pointer">
+                    <input type="number" id="inp-discount" min="0" max="50" step="0.5" value="0"
+                      oninput="document.getElementById('inp-discount-range').value = this.value"
+                      class="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200 font-extrabold text-center text-rosebrand-600">
+                    <span class="font-bold text-slate-500">%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Product Line Items Builder -->
+              <div class="pt-2 border-t border-slate-100 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-extrabold text-rosebrand-700 uppercase">🛒 Danh sách Sản phẩm & Số lượng (*)</label>
+                  <button onclick="addInteractiveItemRow()" type="button"
+                    class="px-2.5 py-1 rounded-lg bg-rosebrand-50 hover:bg-rosebrand-100 text-rosebrand-600 font-extrabold text-[11px] transition">
+                    + Thêm Thiết Bị
+                  </button>
+                </div>
+
+                <div id="interactive-items-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+              </div>
+
+              <button onclick="reprocessFromFormInputs()" type="button"
+                class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition flex items-center justify-center space-x-2 shadow">
+                <span>🔄 Áp Dụng Các Ô Nhập Liệu & Chạy Lại Quy Trình</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- RIGHT 7 COLS: NHÁNH 2B (LÀM RÕ) + BƯỚC 3, 4 (KHO/GIÁ) + BƯỚC 5 (DUYỆT/KHÓA) + ENDTRACK -->
+          <div class="lg:col-span-7 space-y-6">
+
+            <!-- NHÁNH 2B: VÒNG LẶP YÊU CẦU KH LÀM RÕ -> CHỜ PHẢN HỒI -> QUAY LẠI BƯỚC 2 -->
+            <div id="step-2b-box" class="bg-amber-50/90 rounded-3xl p-5 sm:p-6 shadow-card-clean border-2 border-amber-300 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-amber-500 text-white font-extrabold text-xs flex items-center justify-center shadow">2B</span>
+                  <div>
+                    <h3 class="text-sm font-extrabold text-amber-950">Nhánh 2B: Yêu Cầu KH Làm Rõ & Vòng Lặp Phản Hồi</h3>
+                    <p class="text-[11px] text-amber-800">Khi thiếu thông tin → Sinh Email hỏi KH → Chờ KH phản hồi → Quay lại Bước 2</p>
+                  </div>
+                </div>
+                <span id="branch-2b-badge" class="px-3 py-1 rounded-full text-[10px] font-extrabold bg-white text-amber-800 border border-amber-300">
+                  Sẵn sàng khi thiếu thông tin
+                </span>
+              </div>
+
+              <!-- Missing Fields Checklist -->
+              <div id="missing-fields-box" class="bg-white/90 p-3.5 rounded-2xl border border-amber-200 text-xs space-y-1.5">
+                <div class="font-extrabold text-amber-900">Danh sách thông tin cần khách hàng làm rõ:</div>
+                <ul id="res-missing-list" class="list-disc list-inside text-amber-800 font-semibold space-y-1">
+                  <li>Chưa có thông tin bị thiếu (Chỉ kích hoạt khi chạy Ca 1 hoặc bỏ trống liên hệ / sản phẩm).</li>
+                </ul>
+              </div>
+
+              <!-- Step 2B Interactive Customer Reply Simulator (Loopback to Step 2) -->
+              <div class="bg-white p-4 rounded-2xl border border-amber-200 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <label class="text-xs font-extrabold text-slate-800 flex items-center space-x-1.5">
+                    <span>💬</span>
+                    <span>Nhập nội dung Khách hàng phản hồi bổ sung (Để quay lại Bước 2):</span>
+                  </label>
+                  <button onclick="fillSampleCustomerReply()" type="button"
+                    class="px-3 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] transition">
+                    ⚡ Điền mẫu KH trả lời đủ thông tin
+                  </button>
+                </div>
+
+                <textarea id="inp-customer-reply" rows="3"
+                  class="w-full text-xs font-mono p-3 rounded-xl bg-amber-50/40 border border-amber-300 focus:border-amber-600 focus:bg-white focus:outline-none"
+                  placeholder="VD: Gửi Minh An, tôi là Minh (email: minh@congty.vn, SĐT: 0912345678). Công ty cần báo giá 6 chiếc Laptop Dell Latitude 5520 và 1 Switch Cisco, giao trong 5 ngày nhé!"></textarea>
+
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <button onclick="sendClarificationEmailToast()" type="button"
+                    class="px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs transition">
+                    📨 1. Gửi Email Hỏi Khách Hàng
+                  </button>
+                  <button onclick="submitCustomerClarificationLoop()" type="button"
+                    class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs shadow transition flex items-center space-x-1.5">
+                    <span>🔁 2. Khách Phản Hồi Xong → Quay Lại Bước 2 Phân Loại</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- BƯỚC 3 & BƯỚC 4: HỒ SƠ CƠ HỘI, GÁN NVKD & THẨM ĐỊNH KHO / GIÁ -->
+            <div id="step-34-box" class="bg-white rounded-3xl p-5 sm:p-6 shadow-card-clean border border-rosebrand-100 space-y-5">
+              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <span class="w-8 h-8 rounded-xl rose-hero-gradient text-white font-extrabold text-xs flex items-center justify-center shadow">3-4</span>
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Bước 3 & 4: Hồ Sơ Cơ Hội, Gán NVKD & Thẩm Định Tồn Kho</h3>
+                    <p class="text-[11px] text-slate-500">Đối soát trực tiếp bảng giá `products.json` & kiểm tra xung đột tiến độ</p>
+                  </div>
+                </div>
+                <span id="res-opp-id" class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-mono text-xs font-extrabold">
+                  Chưa tạo mã OPP
+                </span>
+              </div>
+
+              <!-- Opportunity Summary & Interactive Sales Rep Selector -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div class="p-3.5 rounded-2xl bg-rosebrand-50/50 border border-rosebrand-100">
+                  <div class="text-[10px] font-extrabold uppercase text-slate-400">Khách Hàng & Đơn Vị</div>
+                  <div id="res-customer" class="font-extrabold text-slate-900 mt-0.5 truncate">--</div>
+                  <div id="res-company" class="text-[11px] text-slate-500 truncate">--</div>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+                  <label class="block text-[10px] font-extrabold uppercase text-indigo-600 mb-1">👨‍💼 NVKD Phụ Trách (Đổi được)</label>
+                  <select id="select-assigned-rep" onchange="changeAssignedRepManually()"
+                    class="w-full bg-white border border-indigo-200 rounded-lg px-2 py-1 text-xs font-extrabold text-indigo-900 focus:outline-none">
+                  </select>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+                  <div class="text-[10px] font-extrabold uppercase text-emerald-700">Tổng Giá Trị Sau Chiết Khấu</div>
+                  <div id="res-total-quote" class="text-base font-black text-emerald-700 mt-0.5">--</div>
+                  <div id="res-audit-summary" class="text-[10px] font-semibold text-emerald-600">Chưa tính giá</div>
+                </div>
+              </div>
+
+              <!-- Inventory & Pricing Table -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-y border-slate-200">
+                      <th class="py-2.5 px-3">Thiết Bị / Dịch Vụ (SKU)</th>
+                      <th class="py-2.5 px-2 text-center">SL</th>
+                      <th class="py-2.5 px-3 text-right">Đơn Giá Chuẩn</th>
+                      <th class="py-2.5 px-3 text-right">Thành Tiền</th>
+                      <th class="py-2.5 px-3 text-center">Tồn Kho</th>
+                      <th class="py-2.5 px-3">Tiến Độ Bàn Giao</th>
+                    </tr>
+                  </thead>
+                  <tbody id="res-items-tbody" class="divide-y divide-slate-100">
+                    <tr>
+                      <td colspan="6" class="py-6 text-center text-slate-400 font-medium">
+                        Hãy bấm chạy một kịch bản ở Bước 1 để xem bảng đối soát tồn kho & giá hiện hành.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Deadline Conflict Warning -->
+              <div id="res-deadline-warning" class="hidden p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-900 flex items-start space-x-2.5">
+                <span class="px-2 py-0.5 rounded bg-red-600 text-white text-[10px] font-black uppercase flex-shrink-0">XUNG ĐỘT TIẾN ĐỘ</span>
+                <div id="res-deadline-warning-text" class="font-semibold leading-relaxed">--</div>
+              </div>
+            </div>
+
+            <!-- BƯỚC 5: LẬP BÁO GIÁ, TRƯỞNG PHÒNG DUYỆT & KHÓA / MỞ KHÓA NÚT GỬI -->
+            <div id="step-5-box" class="bg-white rounded-3xl p-5 sm:p-6 shadow-card-clean border border-rosebrand-100 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center shadow">5</span>
+                  <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">Bước 5: Kiểm Soát Thẩm Quyền & Khóa/Mở Gửi Báo Giá</h3>
+                    <p class="text-[11px] text-slate-500">Chiết khấu &gt; 5% hoặc lệch ngân sách &gt; 15% → Sinh Phiếu trình duyệt + Khóa nút gửi</p>
+                  </div>
+                </div>
+                <span id="lock-status-badge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600">
+                  Chờ dữ liệu
+                </span>
+              </div>
+
+              <!-- Manager Approval Controls -->
+              <div id="manager-approval-panel" class="p-4 rounded-2xl bg-purple-50/80 border border-purple-200 space-y-3">
+                <div class="text-xs font-bold text-purple-950" id="res-approval-reasons">
+                  • Hệ thống tự động kiểm tra hạn mức chiết khấu tại bước này.
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end pt-1">
+                  <div class="sm:col-span-4">
+                    <label class="block text-[11px] font-bold text-purple-900 mb-1">Mức CK Trưởng phòng duyệt (%)</label>
+                    <input type="number" id="inp-manager-discount" min="0" max="30" step="0.5" value="10"
+                      class="w-full px-3 py-2 rounded-xl border border-purple-300 bg-white font-extrabold text-purple-900 text-xs">
+                  </div>
+                  <div class="sm:col-span-8">
+                    <label class="block text-[11px] font-bold text-purple-900 mb-1">Ý kiến / Ghi chú phê duyệt của Trưởng phòng</label>
+                    <input type="text" id="inp-manager-notes" value="Đồng ý mức chiết khấu theo đề xuất để chốt khách hàng chiến lược"
+                      class="w-full px-3 py-2 rounded-xl border border-purple-300 bg-white font-semibold text-slate-800 text-xs">
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+                  <button onclick="adjustDiscountToStandard()" type="button"
+                    class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs transition">
+                    ↩️ Hạ Chiết Khấu Về 5% (NVKD Tự Quyết)
+                  </button>
+                  <button onclick="approveCurrentDeal()" type="button" id="btn-manager-approve"
+                    class="px-5 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-extrabold text-xs shadow transition">
+                    ✅ Trưởng Phòng Phê Duyệt & Mở Khóa Nút Gửi
+                  </button>
+                </div>
+              </div>
+
+              <!-- STEP 6 (ENDTRACK): DRAFT EMAIL & LOCKED/UNLOCKED SEND BUTTON -->
+              <div id="step-end-box" class="pt-3 border-t border-slate-100 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="text-xs font-extrabold text-slate-800 uppercase">
+                    ✉️ Bản Nháp Email & Báo Giá Gửi Khách Hàng (EndTrack)
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="previewOfficialQuotation()" type="button"
+                      class="px-3.5 py-1.5 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 text-rosebrand-600 border border-rosebrand-200 text-xs font-extrabold transition">
+                      📄 Xem & In Báo Giá PDF
+                    </button>
+                    <button onclick="copyDraftEmail()" type="button"
+                      class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition">
+                      📋 Sao Chép
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Editable Subject & Body so user can tweak before sending -->
+                <div class="space-y-2">
+                  <input type="text" id="res-email-subject" placeholder="Tiêu đề email phản hồi..."
+                    class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold text-slate-900 focus:bg-white focus:border-rosebrand-500 focus:outline-none">
+                  <textarea id="res-email-body" rows="8" placeholder="Nội dung bản nháp phản hồi khách hàng sẽ xuất hiện tại đây..."
+                    class="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-sans text-slate-700 leading-relaxed focus:bg-white focus:border-rosebrand-500 focus:outline-none"></textarea>
+                </div>
+
+                <!-- Primary Send / EndTrack Button (Respects Manager Lock!) -->
+                <button id="btn-send-endtrack" onclick="sendQuoteEndTrack()" type="button" disabled
+                  class="w-full py-3.5 px-6 rounded-2xl bg-slate-300 text-slate-500 font-extrabold text-xs uppercase tracking-wider transition flex items-center justify-center space-x-2 cursor-not-allowed">
+                  <span>🔒 Nút Gửi Đang Khóa (Hãy chạy kiểm tra hoặc chờ Trưởng phòng duyệt)</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 2: INVENTORY & PRICING (QUẢN LÝ BẢNG GIÁ & TỒN KHO TRỰC TIẾP)      -->
+      <!-- ===================================================================== -->
+      <div id="tab-inventory" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-6 shadow-card-clean border border-rosebrand-100">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-rosebrand-500">Live Catalog Database</span>
+              <h2 class="text-lg font-extrabold text-slate-900">Bảng Giá & Tồn Kho Hiện Hành (`products.json`)</h2>
+              <p class="text-xs text-slate-500">Chỉnh sửa trực tiếp Đơn giá hoặc Số lượng tồn kho bên dưới và bấm Lưu</p>
+            </div>
+            <button onclick="loadInventoryTable()" class="px-4 py-2 rounded-xl rose-hero-gradient text-white text-xs font-bold shadow">
+              🔄 Tải Lại Kho
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="bg-rosebrand-50/60 text-rosebrand-900 uppercase text-[10px] font-extrabold border-y border-rosebrand-100">
+                  <th class="py-3 px-3">Mã SKU</th>
+                  <th class="py-3 px-3">Tên Thiết Bị & Dịch Vụ</th>
+                  <th class="py-3 px-3">Nhóm</th>
+                  <th class="py-3 px-3 text-right">Đơn Giá (Sửa trực tiếp)</th>
+                  <th class="py-3 px-3 text-center">Tồn Khả Dụng</th>
+                  <th class="py-3 px-3 text-center">Lead Time Nhập</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 3: SALES TEAM (6 NVKD)                                            -->
+      <!-- ===================================================================== -->
+      <div id="tab-sales-team" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-6 shadow-card-clean border border-rosebrand-100">
+          <div class="mb-6">
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-rosebrand-500">Sales Force</span>
+            <h2 class="text-lg font-extrabold text-slate-900">Đội Ngũ 6 Nhân Viên Kinh Doanh</h2>
+            <p class="text-xs text-slate-500">Bấm "Chọn phụ trách đơn hiện tại" trên bất kỳ thẻ NVKD nào để gán trực tiếp</p>
+          </div>
+          <div id="sales-team-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 4: PIPELINE HISTORY CRM                                           -->
+      <!-- ===================================================================== -->
+      <div id="tab-history" class="hidden space-y-6">
+        <div class="bg-white rounded-3xl p-6 shadow-card-clean border border-rosebrand-100">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-rosebrand-500">CRM Records</span>
+              <h2 class="text-lg font-extrabold text-slate-900">Nhật Ký Hồ Sơ Cơ Hội Bán Hàng</h2>
+              <p class="text-xs text-slate-500">Bấm "Mở lại hồ sơ" để nạp lại bất kỳ cơ hội nào vào màn hình xử lý</p>
+            </div>
+            <button onclick="loadHistoryTable()" class="px-4 py-2 rounded-xl rose-hero-gradient text-white text-xs font-bold shadow">
+              🔄 Làm Mới
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr class="bg-rosebrand-50/60 text-rosebrand-900 uppercase text-[10px] font-extrabold border-y border-rosebrand-100">
+                  <th class="py-3 px-3">Mã Hồ Sơ</th>
+                  <th class="py-3 px-3">Thời Gian</th>
+                  <th class="py-3 px-3">Khách Hàng & Công Ty</th>
+                  <th class="py-3 px-3">NVKD</th>
+                  <th class="py-3 px-3 text-right">Giá Trị Báo Giá</th>
+                  <th class="py-3 px-3 text-center">Trạng Thái</th>
+                  <th class="py-3 px-3 text-center">Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 3. OFFICIAL QUOTATION MODAL (XEM & IN BÁO GIÁ PDF)                        -->
+  <!-- ========================================================================= -->
+  <div id="quotation-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-rosebrand-200">
+      <div class="px-6 py-4 bg-rosebrand-50 border-b border-rosebrand-100 flex items-center justify-between">
+        <div class="font-extrabold text-xs text-rosebrand-900">📄 BẢNG BÁO GIÁ DOANH NGHIỆP CHUẨN - CÔNG TY MINH AN</div>
+        <div class="flex items-center space-x-2">
+          <button onclick="printQuotation()" class="px-4 py-1.5 rounded-full rose-hero-gradient text-white text-xs font-bold shadow">
+            🖨️ In / Xuất PDF
+          </button>
+          <button onclick="closeQuotationModal()" class="px-4 py-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-full text-xs font-bold border border-slate-200">
+            Đóng
+          </button>
+        </div>
+      </div>
+
+      <div id="printable-quote-area" class="p-8 overflow-y-auto font-sans text-xs text-slate-800 space-y-6 bg-white">
+        <div class="flex justify-between items-start border-b-2 border-rosebrand-600 pb-4">
+          <div>
+            <h2 class="text-base font-black text-slate-900">CÔNG TY CỔ PHẦN THIẾT BỊ & DỊCH VỤ CÔNG NGHỆ MINH AN</h2>
+            <div class="text-[11px] text-slate-600 mt-1 space-y-0.5">
+              <div>Địa chỉ: Tầng 6, Tòa nhà Công Nghệ, Cầu Giấy, Hà Nội</div>
+              <div>Hotline: 1900 8866 | Email: b2b-sales@minhan-tech.vn</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xl font-black text-rosebrand-600 uppercase">BẢNG BÁO GIÁ</div>
+            <div class="text-xs font-mono font-bold text-slate-700 mt-1" id="quote-doc-no">Số: BG-2026/XXXX</div>
+            <div class="text-[11px] text-slate-500" id="quote-doc-date">Ngày: --</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
+          <div>
+            <div class="font-bold text-slate-900 uppercase text-[11px] mb-1">Khách Hàng Nhận Báo Giá:</div>
+            <div>Người đại diện: <strong id="quote-doc-cust-name">--</strong></div>
+            <div>Doanh nghiệp: <strong id="quote-doc-comp-name">--</strong></div>
+            <div>Email: <span id="quote-doc-email">--</span> | SĐT: <span id="quote-doc-phone">--</span></div>
+          </div>
+          <div>
+            <div class="font-bold text-slate-900 uppercase text-[11px] mb-1">Chuyên Viên Phụ Trách Minh An:</div>
+            <div>Họ và tên: <strong id="quote-doc-rep-name" class="text-rosebrand-600">--</strong></div>
+            <div>Điện thoại: <span id="quote-doc-rep-phone">--</span></div>
+          </div>
+        </div>
+
+        <table class="w-full text-xs border border-slate-300 border-collapse">
+          <thead>
+            <tr class="bg-rosebrand-600 text-white font-semibold">
+              <th class="py-2 px-2 text-center border border-slate-300 w-10">STT</th>
+              <th class="py-2 px-3 border border-slate-300">Tên Thiết Bị & Dịch Vụ</th>
+              <th class="py-2 px-2 text-center border border-slate-300 w-16">ĐVT</th>
+              <th class="py-2 px-2 text-center border border-slate-300 w-14">SL</th>
+              <th class="py-2 px-3 text-right border border-slate-300 w-28">Đơn Giá</th>
+              <th class="py-2 px-3 text-right border border-slate-300 w-32">Thành Tiền</th>
+              <th class="py-2 px-2 text-center border border-slate-300 w-24">Tiến Độ</th>
+            </tr>
+          </thead>
+          <tbody id="quote-doc-tbody"></tbody>
+        </table>
+
+        <div class="flex justify-end">
+          <div class="w-80 space-y-1.5 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <div class="flex justify-between">
+              <span class="text-slate-600">Tổng giá niêm yết:</span>
+              <span id="quote-doc-subtotal" class="font-semibold">--</span>
+            </div>
+            <div class="flex justify-between text-rosebrand-600 font-semibold">
+              <span>Chiết khấu (<span id="quote-doc-disc-pct">0%</span>):</span>
+              <span id="quote-doc-disc-val">--</span>
+            </div>
+            <div class="flex justify-between border-t border-slate-200 pt-1">
+              <span class="text-slate-600">Giá trị trước thuế:</span>
+              <span id="quote-doc-before-vat" class="font-bold">--</span>
+            </div>
+            <div class="flex justify-between text-slate-600">
+              <span>Thuế GTGT (VAT 10%):</span>
+              <span id="quote-doc-vat-val" class="font-semibold">--</span>
+            </div>
+            <div class="flex justify-between border-t-2 border-slate-300 pt-1.5 text-sm font-black text-slate-900">
+              <span>TỔNG THANH TOÁN:</span>
+              <span id="quote-doc-grand-total" class="text-rosebrand-600">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 pt-6 text-center text-xs">
+          <div>
+            <div class="font-bold uppercase text-slate-800">XÁC NHẬN CỦA KHÁCH HÀNG</div>
+            <div class="h-16"></div>
+          </div>
+          <div>
+            <div class="font-bold uppercase text-rosebrand-600">ĐẠI DIỆN CÔNG TY MINH AN</div>
+            <div class="h-12"></div>
+            <div id="quote-doc-rep-signature" class="font-bold text-slate-800">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. INTERACTIVE JAVASCRIPT ENGINE                                          -->
+  <!-- ========================================================================= -->
+  <script>
+    let currentOppData = null;
+    let catalogProducts = [];
+    let salesTeamList = [];
+    let currentHeroIndex = 1;
+    let cachedPipeline = [];
+
+    const HERO_SLIDES = {
+      1: {
+        badge: "KỊCH BẢN 1 / 4 • VÒNG LẶP LÀM RÕ",
+        title: "XỬ LÝ YÊU CẦU THIẾU THÔNG TIN",
+        desc: "Khách hỏi mua chung chung, thiếu số lượng và email liên hệ → AI tự động rẽ Nhánh 2B soạn thư hỏi lại, chờ khách phản hồi rồi quay ngược về Bước 2!"
+      },
+      2: {
+        badge: "KỊCH BẢN 2 / 4 • TRONG THẨM QUYỀN",
+        title: "BÁO GIÁ TỰ ĐỘNG TRONG 3 GIÂY",
+        desc: "Đơn hàng đủ thông tin, chiết khấu 4% (≤ 5% thẩm quyền NVKD), hàng có sẵn trong kho → Mở khóa nút gửi ngay lập tức!"
+      },
+      3: {
+        badge: "KỊCH BẢN 3 / 4 • KHÓA GỬI VƯỢT QUYỀN",
+        title: "KIỂM SOÁT CHIẾT KHẤU ĐẶC BIỆT",
+        desc: "Khách yêu cầu chiết khấu 10% (> 5%) → Tự động sinh Phiếu trình Trưởng phòng duyệt và KHÓA nút gửi cho tới khi được phê duyệt."
+      },
+      4: {
+        badge: "KỊCH BẢN 4 / 4 • CẢNH BÁO TIẾN ĐỘ",
+        title: "NGĂN CHẶN HỨA SAI THỜI HẠN GIAO",
+        desc: "Khách đòi giao 2 Máy chủ Dell trong 3 ngày nhưng kho đang hết hàng (cần 25 ngày nhập) → Cảnh báo đỏ và đề xuất giao 2 đợt."
+      }
+    };
+
+    const SCENARIOS = {
+      1: `Chào Minh An,
+Công ty mình ở Cầu Giấy đang chuẩn bị chuyển văn phòng mới nên có nhu cầu mua sắm thêm một số máy tính làm việc cho nhân viên và thiết bị mạng. 
+Nhờ Minh An gửi giúp mình báo giá các dòng máy tính tốt và chi phí triển khai nhé. Cảm ơn!`,
+
+      2: `Kính gửi: Bộ phận Kinh doanh - Công ty Công nghệ Minh An,
+Tôi là Nguyễn Tuấn Anh, Trưởng phòng IT Công ty Cổ phần Alpha Logistics (email: tuananh@alphalogistics.vn, SĐT: 0988.123.456).
+Công ty chúng tôi cần mua thiết bị bổ sung cho phòng vận hành bao gồm:
+- 5 chiếc Laptop Dell Latitude 5520
+- 1 Thiết bị Switch Cisco Catalyst 9200L 24 Ports
+- 1 Gói Dịch vụ lắp đặt cấu hình mạng nội bộ
+Thời hạn hoàn thành: Trong vòng 7 ngày tới.
+Ngân sách dự kiến: Khoảng 150 triệu VND.
+Do đây là đơn hàng đầu tiên hợp tác, đề nghị Minh An hỗ trợ chiết khấu 4% trên tổng giá trị niêm yết.
+Rất mong nhận được phản hồi sớm. Trân trọng cảm ơn!`,
+
+      3: `Kính gửi Công ty Minh An,
+Tôi là Lê Thu Hương - Phụ trách Mua sắm Tập đoàn SmartRetail (email: huong.le@smartretail.com.vn, SĐT: 0918.999.888).
+Chúng tôi chuẩn bị mở rộng thêm 2 chi nhánh bán lẻ và cần trang bị hạ tầng CNTT gồm:
+- 10 chiếc Laptop Dell Latitude
+- 2 bộ phát WiFi chuyên dụng Aruba
+- 1 Máy chủ HPE ProLiant DL380 Gen10
+- 1 Gói Dịch vụ cài đặt máy chủ
+Thời hạn bàn giao: Trong vòng 15 ngày làm việc.
+Ngân sách nội bộ được duyệt: 350 triệu VND.
+Do số lượng hạng mục nhiều và tiềm năng ký hợp đồng bảo trì lâu dài, chúng tôi yêu cầu mức chiết khấu 10% trên bảng giá niêm yết.
+Đề nghị Minh An phản hồi và gửi bản chào giá chính thức trong hôm nay.`,
+
+      4: `Kính gửi Minh An Tech,
+Tôi là Phạm Quốc Dũng - Giám đốc Công nghệ Công ty Fintech Findex (email: dung.pham@findex.vn, SĐT: 0903.111.222).
+Hệ thống trung tâm dữ liệu của chúng tôi cần mở rộng khẩn cấp:
+- 2 Máy chủ Dell PowerEdge R750
+- 1 Thiết bị tường lửa Fortinet FortiGate 60F
+Yêu cầu tiến độ: Bắt buộc giao hàng và hoàn tất lắp đặt trong vòng 3 ngày tới!
+Đề nghị chiết khấu 5%. Xin cảm ơn.`
+    };
+
+    // INIT ON PAGE LOAD
+    window.addEventListener('DOMContentLoaded', async () => {
+      await fetchInitialData();
+      loadScenario(2, false);
+    });
+
+    async function fetchInitialData() {
+      try {
+        const [pRes, sRes, hRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/sales_team'),
+          fetch('/api/pipeline')
+        ]);
+        catalogProducts = await pRes.json();
+        salesTeamList = await sRes.json();
+        cachedPipeline = await hRes.json();
+
+        document.getElementById('sidebar-history-count').innerText = cachedPipeline.length;
+
+        const repSelect = document.getElementById('select-assigned-rep');
+        repSelect.innerHTML = salesTeamList.map(r => 
+          `<option value="${r.id}">${r.name} (${r.active_deals} deals)</option>`
+        ).join('');
+
+        addInteractiveItemRow('NB-DELL-5520', 5);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function showToast(msg, type = 'rose') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const bg = type === 'emerald' ? 'bg-emerald-600' : type === 'amber' ? 'bg-amber-600' : 'bg-rosebrand-600';
+      el.className = `${bg} text-white px-4 py-3 rounded-2xl shadow-lg text-xs font-extrabold flex items-center space-x-2 pointer-events-auto transition-all`;
+      el.innerHTML = `<span>✨</span><span>${msg}</span>`;
+      container.appendChild(el);
+      setTimeout(() => { el.remove(); }, 3200);
+    }
+
+    // SIDEBAR COLLAPSE TOGGLE
+    function toggleSidebar() {
+      const sb = document.getElementById('app-sidebar');
+      const btn = document.getElementById('sidebar-toggle-btn');
+      sb.classList.toggle('collapsed');
+      btn.innerText = sb.classList.contains('collapsed') ? '▶' : '◀';
+    }
+
+    // HERO CAROUSEL CONTROLS (< > AND DOTS)
+    function selectHeroSlide(idx) {
+      currentHeroIndex = idx;
+      const slide = HERO_SLIDES[idx];
+      document.getElementById('hero-slide-badge').innerText = slide.badge;
+      document.getElementById('hero-slide-title').innerText = slide.title;
+      document.getElementById('hero-slide-desc').innerText = slide.desc;
+
+      [1, 2, 3, 4].forEach(i => {
+        const dot = document.getElementById(`hero-dot-${i}`);
+        dot.className = i === idx
+          ? 'w-6 h-3 rounded-full bg-white transition-all'
+          : 'w-3 h-3 rounded-full bg-white/40 hover:bg-white/70 transition-all';
+      });
+    }
+
+    function prevHeroScenario() {
+      const next = currentHeroIndex <= 1 ? 4 : currentHeroIndex - 1;
+      selectHeroSlide(next);
+      loadScenario(next, false);
+      showToast(`Đã chuyển sang Kịch bản mẫu số ${next}`);
+    }
+
+    function nextHeroScenario() {
+      const next = currentHeroIndex >= 4 ? 1 : currentHeroIndex + 1;
+      selectHeroSlide(next);
+      loadScenario(next, false);
+      showToast(`Đã chuyển sang Kịch bản mẫu số ${next}`);
+    }
+
+    function applyCurrentHeroScenario(runImmediately) {
+      loadScenario(currentHeroIndex, runImmediately);
+    }
+
+    function jumpToStep(elementId) {
+      switchTab('workspace');
+      const el = document.getElementById(elementId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-4', 'ring-rosebrand-300');
+        setTimeout(() => el.classList.remove('ring-4', 'ring-rosebrand-300'), 1400);
+      }
+    }
+
+    function createNewBlankRequest() {
+      switchTab('workspace');
+      clearInput();
+      jumpToStep('step-1-box');
+      document.getElementById('raw-input').focus();
+      showToast('Đã tạo phiên nhập yêu cầu mới!');
+    }
+
+    function loadScenario(num, autoRun = false) {
+      selectHeroSlide(num);
+      document.getElementById('raw-input').value = SCENARIOS[num] || '';
+      if (autoRun) {
+        processWithAgent();
+      } else {
+        showToast(`Đã nạp văn bản Ca ${num} vào Bước 1`);
+      }
+    }
+
+    function clearInput() {
+      document.getElementById('raw-input').value = '';
+      document.getElementById('inp-customer').value = '';
+      document.getElementById('inp-company').value = '';
+      document.getElementById('inp-email').value = '';
+      document.getElementById('inp-phone').value = '';
+      document.getElementById('inp-deadline').value = '';
+      document.getElementById('inp-budget').value = '';
+      document.getElementById('inp-discount').value = 0;
+      document.getElementById('inp-discount-range').value = 0;
+      document.getElementById('interactive-items-list').innerHTML = '';
+    }
+
+    // DYNAMIC PRODUCT ITEM ROWS IN STEP 2 FORM
+    function addInteractiveItemRow(selectedSku = 'NB-DELL-5520', qty = 1) {
+      const list = document.getElementById('interactive-items-list');
+      const row = document.createElement('div');
+      row.className = 'item-builder-row flex items-center space-x-2 bg-slate-50 p-2 rounded-xl border border-slate-200';
+      const optionsHtml = catalogProducts.map(p => 
+        `<option value="${p.sku}" ${p.sku === selectedSku ? 'selected' : ''}>${p.name} (${formatVND(p.current_price)})</option>`
+      ).join('');
+
+      row.innerHTML = `
+        <select class="item-sku-select flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 focus:outline-none">
+          ${optionsHtml}
+        </select>
+        <input type="number" min="1" value="${qty}" class="item-qty-input w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-center font-extrabold text-xs">
+        <button type="button" onclick="this.parentElement.remove()" class="w-7 h-7 rounded-lg bg-rosebrand-50 hover:bg-rosebrand-500 text-rosebrand-600 hover:text-white font-bold text-xs transition">✕</button>
+      `;
+      list.appendChild(row);
+    }
+
+    function collectOverrideFieldsFromStep2() {
+      const rows = document.querySelectorAll('.item-builder-row');
+      const raw_items = [];
+      rows.forEach(r => {
+        const sku = r.querySelector('.item-sku-select').value;
+        const qty = parseInt(r.querySelector('.item-qty-input').value || '1', 10);
+        const prod = catalogProducts.find(p => p.sku === sku);
+        if (prod) {
+          raw_items.push({
+            raw_name: prod.name,
+            matched_sku: prod.sku,
+            quantity: qty
+          });
+        }
+      });
+
+      return {
+        customer_name: document.getElementById('inp-customer').value,
+        company_name: document.getElementById('inp-company').value,
+        email: document.getElementById('inp-email').value,
+        phone: document.getElementById('inp-phone').value,
+        requested_deadline: document.getElementById('inp-deadline').value,
+        budget: document.getElementById('inp-budget').value,
+        requested_discount_pct: document.getElementById('inp-discount').value,
+        assigned_rep_id: document.getElementById('select-assigned-rep').value,
+        raw_items: raw_items
+      };
+    }
+
+    function populateStep2FormFromExtracted(ext) {
+      document.getElementById('inp-customer').value = ext.customer_name || '';
+      document.getElementById('inp-company').value = ext.company_name || '';
+      document.getElementById('inp-email').value = ext.email || '';
+      document.getElementById('inp-phone').value = ext.phone || '';
+      document.getElementById('inp-deadline').value = ext.requested_deadline || '';
+      document.getElementById('inp-budget').value = ext.budget || '';
+      document.getElementById('inp-discount').value = ext.requested_discount_pct || 0;
+      document.getElementById('inp-discount-range').value = ext.requested_discount_pct || 0;
+
+      // Highlight missing vs valid inputs
+      const hasContact = Boolean(ext.email || ext.phone);
+      document.getElementById('inp-email').className = `w-full px-3 py-2 rounded-xl border ${hasContact ? 'border-emerald-400 bg-emerald-50/20' : 'border-amber-400 bg-amber-50'} font-semibold text-xs`;
+      document.getElementById('inp-phone').className = `w-full px-3 py-2 rounded-xl border ${hasContact ? 'border-emerald-400 bg-emerald-50/20' : 'border-amber-400 bg-amber-50'} font-semibold text-xs`;
+
+      const list = document.getElementById('interactive-items-list');
+      list.innerHTML = '';
+      (ext.raw_items || []).forEach(it => {
+        addInteractiveItemRow(it.matched_sku || 'NB-DELL-5520', it.quantity || 1);
+      });
+
+      const badge = document.getElementById('step2-valid-badge');
+      if (ext.is_complete) {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800';
+        badge.innerText = '✓ Đủ thông tin cốt lõi';
+      } else {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800';
+        badge.innerText = '⚠️ Thiếu thông tin bắt buộc';
+      }
+    }
+
+    function resetFlowchartHighlights() {
+      ['wf-node-1', 'wf-node-2', 'wf-node-2b', 'wf-node-wait-reply', 'wf-node-3', 'wf-node-4', 'wf-node-5', 'wf-node-end'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active-wf', 'warning-wf', 'success-wf');
+      });
+    }
+
+    // MAIN AGENT EXECUTION (STEP 1 -> STEP 2)
+    async function processWithAgent() {
+      const text = document.getElementById('raw-input').value.trim();
+      if (!text) {
+        showToast('Vui lòng nhập nội dung yêu cầu ở Bước 1!', 'amber');
+        jumpToStep('step-1-box');
+        return;
+      }
+
+      const btn = document.getElementById('btn-process');
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳ Gemini 2.5 Flash đang bóc tách & kiểm tra...</span>`;
+
+      try {
+        const res = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw_text: text })
+        });
+        const data = await res.json();
+        currentOppData = data;
+        renderWorkflowState(data);
+        showToast(`Đã xử lý xong mã cơ hội ${data.id}`, 'emerald');
+      } catch (err) {
+        alert('Lỗi kết nối: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡ Chạy Bước 1 & 2: AI Bóc Tách & Kiểm Tra Thông Tin</span>`;
+      }
+    }
+
+    // RE-RUN FROM STEP 2 FORM INPUTS
+    async function reprocessFromFormInputs() {
+      const overrides = collectOverrideFieldsFromStep2();
+      const rawText = document.getElementById('raw-input').value.trim() || 'Yêu cầu nhập trực tiếp từ biểu mẫu Bước 2';
+      const existingId = currentOppData ? currentOppData.id : null;
+
+      try {
+        const res = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            raw_text: rawText,
+            existing_opp_id: existingId,
+            override_fields: overrides
+          })
+        });
+        const data = await res.json();
+        currentOppData = data;
+        renderWorkflowState(data);
+        showToast('Đã cập nhật dữ liệu từ các ô nhập liệu Bước 2!', 'emerald');
+      } catch (e) {
+        alert('Lỗi cập nhật: ' + e.message);
+      }
+    }
+
+    // LOOPBACK FROM BRANCH 2B -> STEP 2
+    function fillSampleCustomerReply() {
+      document.getElementById('inp-customer-reply').value =
+        `Gửi Minh An, tôi là Trần Hoàng Minh - Giám đốc Công ty TNHH Sao Việt (email: minh.tran@saoviet.vn, SĐT: 0912.888.999).\n` +
+        `Chúng tôi xác nhận số lượng cần mua gồm:\n- 6 chiếc Laptop Dell Latitude 5520\n- 1 Thiết bị Switch Cisco Catalyst 9200L 24 Ports\n` +
+        `Thời hạn giao trong 7 ngày, đề nghị chiết khấu 4% nhé!`;
+      showToast('Đã điền mẫu phản hồi của khách hàng!', 'amber');
+    }
+
+    function sendClarificationEmailToast() {
+      showToast('📨 Đã gửi Email yêu cầu làm rõ cho khách hàng! Chuyển sang trạng thái: Chờ KH phản hồi.', 'amber');
+      document.getElementById('wf-node-wait-reply').classList.add('warning-wf');
+    }
+
+    async function submitCustomerClarificationLoop() {
+      const replyText = document.getElementById('inp-customer-reply').value.trim();
+      if (!replyText) {
+        showToast('Vui lòng nhập nội dung khách hàng phản hồi bổ sung!', 'amber');
+        return;
+      }
+      const oppId = currentOppData ? currentOppData.id : null;
+
+      try {
+        const res = await fetch('/api/clarify_reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ opp_id: oppId, reply_text: replyText })
+        });
+        const data = await res.json();
+        currentOppData = data;
+        document.getElementById('raw-input').value = data.raw_input_text || replyText;
+        renderWorkflowState(data);
+        showToast('🔁 Khách phản hồi xong → Đã quay lại Bước 2 và thông suốt xuống Bước 3, 4, 5!', 'emerald');
+        jumpToStep('step-34-box');
+      } catch (e) {
+        alert('Lỗi xử lý phản hồi: ' + e.message);
+      }
+    }
+
+    // RENDER ENTIRE WORKFLOW STATE ONTO UI
+    function renderWorkflowState(data) {
+      resetFlowchartHighlights();
+      document.getElementById('wf-node-1').classList.add('active-wf');
+      document.getElementById('wf-node-2').classList.add('active-wf');
+
+      populateStep2FormFromExtracted(data.extracted_data);
+      document.getElementById('res-opp-id').innerText = data.id;
+      document.getElementById('live-status-pill').innerText = `Trạng thái: ${data.status}`;
+
+      const sendBtn = document.getElementById('btn-send-endtrack');
+      const lockBadge = document.getElementById('lock-status-badge');
+
+      // CASE A: INCOMPLETE INFO -> BRANCH 2B
+      if (data.status_code === 'CLARIFICATION_REQUIRED') {
+        document.getElementById('wf-node-2b').classList.add('warning-wf');
+        document.getElementById('branch-2b-badge').className = 'px-3 py-1 rounded-full text-[10px] font-extrabold bg-amber-500 text-white';
+        document.getElementById('branch-2b-badge').innerText = 'ĐANG CHỜ KH PHẢN HỒI';
+
+        const ul = document.getElementById('res-missing-list');
+        ul.innerHTML = (data.extracted_data.missing_fields || []).map(m => `<li>${m}</li>`).join('');
+
+        document.getElementById('res-customer').innerText = data.customer_name || 'Chưa rõ';
+        document.getElementById('res-company').innerText = data.company_name || 'Chưa rõ';
+        document.getElementById('res-total-quote').innerText = 'Chờ bổ sung SP';
+
+        document.getElementById('res-email-subject').value = data.clarification_package.subject;
+        document.getElementById('res-email-body').value = data.clarification_package.body;
+
+        lockBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800';
+        lockBadge.innerText = '🔒 Khóa gửi báo giá (Đang chờ KH làm rõ)';
+
+        sendBtn.disabled = true;
+        sendBtn.className = 'w-full py-3.5 px-6 rounded-2xl bg-slate-200 text-slate-500 font-extrabold text-xs uppercase tracking-wider cursor-not-allowed';
+        sendBtn.innerHTML = `<span>🔒 Đang chờ khách hàng phản hồi ở Nhánh 2B</span>`;
+
+        jumpToStep('step-2b-box');
+        return;
+      }
+
+      // CASE B: COMPLETE INFO -> STEP 3, 4, 5
+      document.getElementById('branch-2b-badge').className = 'px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800';
+      document.getElementById('branch-2b-badge').innerText = '✓ Đã đủ thông tin (Bỏ qua 2B)';
+      document.getElementById('res-missing-list').innerHTML = `<li class="text-emerald-700">Tất cả thông tin liên hệ, sản phẩm và số lượng đã đầy đủ!</li>`;
+
+      document.getElementById('wf-node-3').classList.add('active-wf');
+      document.getElementById('wf-node-4').classList.add('active-wf');
+
+      const opp = data.opportunity_profile;
+      document.getElementById('res-customer').innerText = data.customer_name;
+      document.getElementById('res-company').innerText = data.company_name;
+      document.getElementById('res-total-quote').innerText = formatVND(opp.pricing_policy.final_quoted_price);
+
+      if (opp.assigned_rep && opp.assigned_rep.id) {
+        document.getElementById('select-assigned-rep').value = opp.assigned_rep.id;
+      }
+
+      // Render Inventory Table with inline Qty adjustment
+      const audit = opp.inventory_audit;
+      const tbody = document.getElementById('res-items-tbody');
+      tbody.innerHTML = '';
+      audit.verified_items.forEach((it, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-rosebrand-50/30 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3">
+            <div class="font-bold text-slate-900">${it.name}</div>
+            <div class="text-[10px] font-mono text-slate-400">${it.sku}</div>
+          </td>
+          <td class="py-2.5 px-2 text-center font-extrabold text-rosebrand-600">${it.quantity}</td>
+          <td class="py-2.5 px-3 text-right font-semibold">${formatVND(it.unit_price)}</td>
+          <td class="py-2.5 px-3 text-right font-extrabold text-slate-900">${formatVND(it.line_total)}</td>
+          <td class="py-2.5 px-3 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${it.is_in_stock ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'}">
+              ${it.available_stock} ${it.unit}
+            </span>
+          </td>
+          <td class="py-2.5 px-3 text-[11px] font-bold ${it.is_in_stock ? 'text-emerald-700' : 'text-amber-700'}">
+            ${it.stock_status}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('res-audit-summary').innerText =
+        `Niêm yết: ${formatVND(audit.total_list_price)} • CK: ${opp.pricing_policy.applied_discount_pct}%`;
+
+      const warnBox = document.getElementById('res-deadline-warning');
+      if (!audit.is_deadline_feasible) {
+        warnBox.classList.remove('hidden');
+        document.getElementById('res-deadline-warning-text').innerText = audit.deadline_warning;
+      } else {
+        warnBox.classList.add('hidden');
+      }
+
+      // Step 5: Check Manager Approval & Lock/Unlock Send Button
+      const policy = opp.pricing_policy;
+      document.getElementById('inp-manager-discount').value = policy.applied_discount_pct;
+
+      if (policy.requires_manager_approval && data.send_locked !== false) {
+        document.getElementById('wf-node-5').classList.add('warning-wf');
+        lockBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-red-100 text-red-700 border border-red-200';
+        lockBadge.innerText = '🔒 ĐANG KHÓA NÚT GỬI (CHỜ TRƯỞNG PHÒNG DUYỆT)';
+
+        document.getElementById('res-approval-reasons').innerHTML =
+          policy.approval_reasons.map(r => `<div class="text-red-700">⚠️ ${r}</div>`).join('');
+
+        sendBtn.disabled = true;
+        sendBtn.className = 'w-full py-3.5 px-6 rounded-2xl bg-slate-200 text-slate-500 font-extrabold text-xs uppercase tracking-wider cursor-not-allowed';
+        sendBtn.innerHTML = `<span>🔒 Đang Khóa Nút Gửi — Vui Lòng Bấm "Trưởng Phòng Phê Duyệt" Ở Trên</span>`;
+      } else {
+        document.getElementById('wf-node-5').classList.add('success-wf');
+        document.getElementById('wf-node-end').classList.add('success-wf');
+        lockBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        lockBadge.innerText = '🔓 ĐÃ MỞ KHÓA (READY_TO_SEND)';
+
+        document.getElementById('res-approval-reasons').innerHTML =
+          `<div class="text-emerald-800">✓ Đúng thẩm quyền hoặc đã được Trưởng phòng phê duyệt. Nút gửi đã mở khóa!</div>`;
+
+        sendBtn.disabled = false;
+        sendBtn.className = 'w-full py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition cursor-pointer';
+        sendBtn.innerHTML = `<span>📤 Gửi Báo Giá Cho Khách Hàng & Hoàn Tất EndTrack</span>`;
+      }
+
+      document.getElementById('res-email-subject').value = data.proposal_package.email_subject;
+      document.getElementById('res-email-body').value = data.proposal_package.email_body;
+    }
+
+    async function changeAssignedRepManually() {
+      if (!currentOppData) return;
+      await reprocessFromFormInputs();
+      showToast('Đã đổi NVKD phụ trách cơ hội!');
+    }
+
+    async function adjustDiscountToStandard() {
+      document.getElementById('inp-discount').value = 5;
+      document.getElementById('inp-discount-range').value = 5;
+      await reprocessFromFormInputs();
+      showToast('Đã hạ chiết khấu về 5% (Trong thẩm quyền NVKD) → Tự động mở khóa!', 'emerald');
+    }
+
+    async function approveCurrentDeal() {
+      if (!currentOppData) {
+        showToast('Hãy chạy một yêu cầu trước khi phê duyệt!', 'amber');
+        return;
+      }
+      const notes = document.getElementById('inp-manager-notes').value;
+      const approvedDisc = parseFloat(document.getElementById('inp-manager-discount').value || '0');
+
+      const res = await fetch('/api/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          opp_id: currentOppData.id,
+          notes: notes,
+          approved_discount: approvedDisc
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentOppData = data.record;
+        renderWorkflowState(currentOppData);
+        showToast('✅ Trưởng phòng đã duyệt! Đã MỞ KHÓA nút gửi báo giá.', 'emerald');
+      }
+    }
+
+    async function sendQuoteEndTrack() {
+      if (!currentOppData) return;
+      const res = await fetch('/api/send_endtrack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ opp_id: currentOppData.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentOppData = data.record;
+        document.getElementById('live-status-pill').innerText = `Trạng thái: ${currentOppData.status}`;
+        const sendBtn = document.getElementById('btn-send-endtrack');
+        sendBtn.className = 'w-full py-3.5 px-6 rounded-2xl bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider';
+        sendBtn.innerHTML = `<span>🎉 ĐÃ GỬI BÁO GIÁ & HOÀN TẤT ENDTRACK LÚC ${currentOppData.sent_at}</span>`;
+        showToast('🎉 Đã gửi báo giá cho khách hàng & lưu hoàn tất EndTrack!', 'emerald');
+      } else {
+        showToast(data.message, 'amber');
+      }
+    }
+
+    // TAB SWITCHER
+    function switchTab(tabId) {
+      ['workspace', 'inventory', 'sales-team', 'history'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`nav-btn-${t}`);
+        if (btn) {
+          btn.className = 'nav-btn-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-rosebrand-50 hover:text-rosebrand-600 font-bold text-xs transition';
+        }
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`nav-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.className = 'nav-btn-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-rosebrand-500 text-white font-bold text-xs shadow-rose-glow transition';
+      }
+
+      if (tabId === 'inventory') loadInventoryTable();
+      if (tabId === 'sales-team') loadSalesTeamCards();
+      if (tabId === 'history') loadHistoryTable();
+    }
+
+    async function loadInventoryTable() {
+      const res = await fetch('/api/products');
+      catalogProducts = await res.json();
+      const tbody = document.getElementById('inventory-tbody');
+      tbody.innerHTML = '';
+      catalogProducts.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-rosebrand-50/30 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-mono font-extrabold text-rosebrand-600">${p.sku}</td>
+          <td class="py-3 px-3 font-bold text-slate-800">${p.name}</td>
+          <td class="py-3 px-3 text-slate-500">${p.category}</td>
+          <td class="py-3 px-3 text-right">
+            <div class="inline-flex items-center space-x-1">
+              <input type="number" value="${p.current_price}" step="500000" id="price-inp-${p.sku}"
+                class="w-28 px-2 py-1 rounded-lg border border-slate-200 text-right font-extrabold text-slate-900">
+              <button onclick="updateProductPrice('${p.sku}')" class="px-2 py-1 rounded-lg bg-rosebrand-500 text-white text-[10px] font-bold">Lưu</button>
+            </div>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <div class="inline-flex items-center space-x-1.5 bg-slate-100 px-2.5 py-1 rounded-full">
+              <button onclick="adjustStock('${p.sku}', -1)" class="w-5 h-5 rounded-full bg-white hover:bg-rosebrand-500 hover:text-white font-bold text-xs flex items-center justify-center shadow-sm">-</button>
+              <span class="px-2 font-extrabold ${p.available_stock > 0 ? 'text-emerald-700' : 'text-red-600'}">${p.available_stock} ${p.unit}</span>
+              <button onclick="adjustStock('${p.sku}', 1)" class="w-5 h-5 rounded-full bg-white hover:bg-rosebrand-500 hover:text-white font-bold text-xs flex items-center justify-center shadow-sm">+</button>
+            </div>
+          </td>
+          <td class="py-3 px-3 text-center font-bold text-slate-600">${p.restock_lead_days} ngày</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateProductPrice(sku) {
+      const newPrice = parseFloat(document.getElementById(`price-inp-${sku}`).value || '0');
+      await fetch('/api/products/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sku: sku, current_price: newPrice })
+      });
+      showToast(`Đã cập nhật giá mới cho ${sku}: ${formatVND(newPrice)}`, 'emerald');
+      loadInventoryTable();
+    }
+
+    async function adjustStock(sku, delta) {
+      const p = catalogProducts.find(item => item.sku === sku);
+      if (!p) return;
+      const newStock = Math.max(0, p.available_stock + delta);
+      await fetch('/api/products/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sku: sku, available_stock: newStock })
+      });
+      showToast(`Đã cập nhật tồn kho ${sku}: ${newStock} ${p.unit}`);
+      loadInventoryTable();
+    }
+
+    async function loadSalesTeamCards() {
+      const res = await fetch('/api/sales_team');
+      salesTeamList = await res.json();
+      const container = document.getElementById('sales-team-cards');
+      container.innerHTML = '';
+      salesTeamList.forEach(rep => {
+        const card = document.createElement('div');
+        card.className = 'p-5 rounded-2xl border border-rosebrand-100 bg-rosebrand-50/30 flex flex-col justify-between space-y-4';
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-2xl rose-hero-gradient text-white font-extrabold text-sm flex items-center justify-center shadow">
+              ${rep.name.split(' ').pop().charAt(0)}
+            </div>
+            <div>
+              <div class="font-extrabold text-slate-900 text-sm">${rep.name}</div>
+              <div class="text-[11px] text-rosebrand-600 font-bold">${rep.id} • Đang xử lý: ${rep.active_deals} deals</div>
+            </div>
+          </div>
+          <div class="text-xs text-slate-600 space-y-1">
+            <div>🎯 <strong>Chuyên môn:</strong> ${rep.specialty}</div>
+            <div>📧 ${rep.email}</div>
+            <div>📞 ${rep.phone}</div>
+          </div>
+          <button onclick="pickSalesRepFromTab('${rep.id}', '${rep.name}')"
+            class="w-full py-2 rounded-xl bg-white hover:bg-rosebrand-500 text-rosebrand-600 hover:text-white border border-rosebrand-200 font-extrabold text-xs transition">
+            ✓ Chọn Phụ Trách Cơ Hội Hiện Tại
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function pickSalesRepFromTab(repId, repName) {
+      document.getElementById('select-assigned-rep').value = repId;
+      switchTab('workspace');
+      if (currentOppData) {
+        await reprocessFromFormInputs();
+      }
+      showToast(`Đã gán chuyên viên ${repName} phụ trách!`);
+    }
+
+    async function loadHistoryTable() {
+      const res = await fetch('/api/pipeline');
+      cachedPipeline = await res.json();
+      document.getElementById('sidebar-history-count').innerText = cachedPipeline.length;
+      const tbody = document.getElementById('history-tbody');
+      tbody.innerHTML = '';
+      if (!cachedPipeline.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-slate-400 font-semibold">Chưa có hồ sơ cơ hội nào</td></tr>`;
+        return;
+      }
+      cachedPipeline.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-rosebrand-50/30 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-mono font-extrabold text-rosebrand-600">${p.id}</td>
+          <td class="py-3 px-3 text-slate-500">${p.created_at}</td>
+          <td class="py-3 px-3 font-bold text-slate-800">${p.customer_name} (${p.company_name})</td>
+          <td class="py-3 px-3 font-bold text-indigo-700">${p.assigned_rep_name || 'Chưa gán'}</td>
+          <td class="py-3 px-3 text-right font-extrabold text-emerald-700">${p.total_amount ? formatVND(p.total_amount) : '--'}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rosebrand-50 text-rosebrand-700 border border-rosebrand-200">${p.status}</span>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <button onclick="reopenPipelineRecord(${idx})" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-rosebrand-600 text-white text-[11px] font-bold transition">
+              Mở Lại Hồ Sơ
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function reopenPipelineRecord(idx) {
+      const rec = cachedPipeline[idx];
+      if (!rec) return;
+      currentOppData = rec;
+      document.getElementById('raw-input').value = rec.raw_input_text || '';
+      switchTab('workspace');
+      renderWorkflowState(rec);
+      showToast(`Đã nạp lại hồ sơ ${rec.id}`);
+    }
+
+    function previewOfficialQuotation() {
+      if (!currentOppData || !currentOppData.opportunity_profile) {
+        showToast('Vui lòng chạy một yêu cầu đầy đủ thông tin trước khi in báo giá!', 'amber');
+        return;
+      }
+      const opp = currentOppData.opportunity_profile;
+      const audit = opp.inventory_audit;
+      const policy = opp.pricing_policy;
+
+      document.getElementById('quote-doc-no').innerText = `Số: BG-MINHAN/${currentOppData.id.replace('OPP-', '')}`;
+      document.getElementById('quote-doc-date').innerText = `Ngày: ${new Date().toLocaleDateString('vi-VN')}`;
+      document.getElementById('quote-doc-cust-name').innerText = currentOppData.customer_name;
+      document.getElementById('quote-doc-comp-name').innerText = currentOppData.company_name;
+      document.getElementById('quote-doc-email').innerText = opp.email || 'N/A';
+      document.getElementById('quote-doc-phone').innerText = opp.phone || 'N/A';
+      document.getElementById('quote-doc-rep-name').innerText = opp.assigned_rep.name;
+      document.getElementById('quote-doc-rep-phone').innerText = opp.assigned_rep.phone;
+      document.getElementById('quote-doc-rep-signature').innerText = opp.assigned_rep.name;
+
+      const tbody = document.getElementById('quote-doc-tbody');
+      tbody.innerHTML = audit.verified_items.map((it, i) => `
+        <tr class="border-b border-slate-200">
+          <td class="py-2 px-2 text-center border border-slate-300">${i + 1}</td>
+          <td class="py-2 px-3 border border-slate-300 font-bold">${it.name} (${it.sku})</td>
+          <td class="py-2 px-2 text-center border border-slate-300">${it.unit}</td>
+          <td class="py-2 px-2 text-center border border-slate-300 font-bold">${it.quantity}</td>
+          <td class="py-2 px-3 text-right border border-slate-300">${formatVND(it.unit_price)}</td>
+          <td class="py-2 px-3 text-right border border-slate-300 font-bold">${formatVND(it.line_total)}</td>
+          <td class="py-2 px-2 text-center border border-slate-300">${it.lead_time_days} ngày</td>
+        </tr>
+      `).join('');
+
+      const beforeVat = policy.final_quoted_price;
+      const vat = beforeVat * 0.10;
+      document.getElementById('quote-doc-subtotal').innerText = formatVND(audit.total_list_price);
+      document.getElementById('quote-doc-disc-pct').innerText = `${policy.applied_discount_pct}%`;
+      document.getElementById('quote-doc-disc-val').innerText = `-${formatVND(policy.discount_amount)}`;
+      document.getElementById('quote-doc-before-vat').innerText = formatVND(beforeVat);
+      document.getElementById('quote-doc-vat-val').innerText = formatVND(vat);
+      document.getElementById('quote-doc-grand-total').innerText = formatVND(beforeVat + vat);
+
+      document.getElementById('quotation-modal').classList.remove('hidden');
+    }
+
+    function closeQuotationModal() {
+      document.getElementById('quotation-modal').classList.add('hidden');
+    }
+
+    function printQuotation() {
+      window.print();
+    }
+
+    function copyDraftEmail() {
+      const subject = document.getElementById('res-email-subject').value;
+      const body = document.getElementById('res-email-body').value;
+      navigator.clipboard.writeText(`Tiêu đề: ${subject}\n\n${body}`).then(() => {
+        showToast('📋 Đã sao chép nội dung email vào Clipboard!', 'emerald');
+      });
+    }
+
+    async function resetPipeline() {
+      await fetch('/api/reset', { method: 'POST' });
+      showToast('Đã làm mới toàn bộ dữ liệu Pipeline!');
+      loadHistoryTable();
+    }
+
+    function formatVND(num) {
+      if (!num && num !== 0) return '--';
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+    }
+  </script>
+</body>
+</html>

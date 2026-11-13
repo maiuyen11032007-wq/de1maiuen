@@ -1,0 +1,21 @@
+{
+  "company_name": "Công ty TNHH Thiết bị & Dịch vụ Công nghệ Minh An",
+  "sla_hours": {
+    "first_response": 4,
+    "proposal_delivery": 24
+  },
+  "discount_matrix": {
+    "sales_rep_max_pct": 5.0,
+    "sales_manager_max_pct": 12.0,
+    "director_approval_required_above_pct": 12.0
+  },
+  "delivery_policy": {
+    "in_stock_buffer_days": 2,
+    "out_of_stock_allow_rush_delivery": false,
+    "split_delivery_recommended_if_urgent": true
+  },
+  "budget_thresholds": {
+    "budget_gap_alert_pct": 15.0
+  }
+}
+

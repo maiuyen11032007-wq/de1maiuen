@@ -1,0 +1,102 @@
+[
+  {
+    "sku": "NB-DELL-5520",
+    "name": "Laptop Dell Latitude 5520 (Intel Core i7-1185G7, 16GB RAM, 512GB SSD)",
+    "category": "Thiết bị văn phòng",
+    "unit": "Chiếc",
+    "current_price": 22500000,
+    "available_stock": 14,
+    "restock_lead_days": 10,
+    "min_order_qty": 1,
+    "aliases": ["laptop dell", "dell latitude", "dell 5520", "máy tính dell", "máy tính xách tay dell"]
+  },
+  {
+    "sku": "NB-THINKPAD-T14",
+    "name": "Laptop Lenovo ThinkPad T14 Gen 3 (Ryzen 7 Pro, 16GB RAM, 512GB SSD)",
+    "category": "Thiết bị văn phòng",
+    "unit": "Chiếc",
+    "current_price": 24000000,
+    "available_stock": 6,
+    "restock_lead_days": 12,
+    "min_order_qty": 1,
+    "aliases": ["thinkpad", "lenovo thinkpad", "thinkpad t14", "laptop lenovo"]
+  },
+  {
+    "sku": "SRV-HPE-DL380",
+    "name": "Máy chủ HPE ProLiant DL380 Gen10 (2x Intel Xeon Silver 4210R, 64GB RAM, 2x 480GB SSD)",
+    "category": "Hạ tầng máy chủ",
+    "unit": "Bộ",
+    "current_price": 86000000,
+    "available_stock": 2,
+    "restock_lead_days": 21,
+    "min_order_qty": 1,
+    "aliases": ["server hp", "máy chủ hpe", "hp dl380", "server dl380", "máy chủ hp"]
+  },
+  {
+    "sku": "SRV-DELL-R750",
+    "name": "Máy chủ Dell PowerEdge R750 (2x Intel Xeon Gold 5318Y, 64GB RAM, 3x 1.2TB SAS)",
+    "category": "Hạ tầng máy chủ",
+    "unit": "Bộ",
+    "current_price": 95000000,
+    "available_stock": 0,
+    "restock_lead_days": 25,
+    "min_order_qty": 1,
+    "aliases": ["dell poweredge", "server dell", "dell r750", "máy chủ dell"]
+  },
+  {
+    "sku": "SW-CISCO-C9200L",
+    "name": "Switch Cisco Catalyst C9200L-24P-4G-E (24 Ports PoE+, 4x1G SFP)",
+    "category": "Thiết bị mạng",
+    "unit": "Chiếc",
+    "current_price": 21500000,
+    "available_stock": 8,
+    "restock_lead_days": 14,
+    "min_order_qty": 1,
+    "aliases": ["switch cisco", "cisco catalyst", "switch 24 port", "thiết bị chuyển mạch cisco", "c9200l"]
+  },
+  {
+    "sku": "FW-FORTI-60F",
+    "name": "Thiết bị tường lửa Fortinet FortiGate 60F kèm bản quyền UTM 1 năm",
+    "category": "An toàn thông tin",
+    "unit": "Thiết bị",
+    "current_price": 16500000,
+    "available_stock": 5,
+    "restock_lead_days": 7,
+    "min_order_qty": 1,
+    "aliases": ["firewall", "fortigate", "fortigate 60f", "tường lửa", "fortinet"]
+  },
+  {
+    "sku": "AP-ARUBA-505",
+    "name": "Bộ phát WiFi chuyên dụng Aruba Instant On AP22 / AP-505 chuẩn WiFi 6",
+    "category": "Thiết bị mạng",
+    "unit": "Chiếc",
+    "current_price": 4200000,
+    "available_stock": 25,
+    "restock_lead_days": 5,
+    "min_order_qty": 1,
+    "aliases": ["wifi aruba", "access point aruba", "bộ phát wifi", "ap aruba", "wifi chuyên dụng"]
+  },
+  {
+    "sku": "SVC-INSTALL-BASIC",
+    "name": "Dịch vụ lắp đặt cấu hình mạng nội bộ & kết nối thiết bị",
+    "category": "Dịch vụ công nghệ",
+    "unit": "Gói",
+    "current_price": 4500000,
+    "available_stock": 999,
+    "restock_lead_days": 2,
+    "min_order_qty": 1,
+    "aliases": ["lắp đặt mạng", "cấu hình mạng", "dịch vụ kết nối", "triển khai mạng"]
+  },
+  {
+    "sku": "SVC-MIGRATE-SERVER",
+    "name": "Dịch vụ cài đặt, ảo hóa VMware/Proxmox và di chuyển hệ thống lên máy chủ",
+    "category": "Dịch vụ công nghệ",
+    "unit": "Gói",
+    "current_price": 12000000,
+    "available_stock": 999,
+    "restock_lead_days": 3,
+    "min_order_qty": 1,
+    "aliases": ["cài đặt máy chủ", "triển khai server", "ảo hóa vmware", "di chuyển dữ liệu", "dịch vụ máy chủ"]
+  }
+]
+
